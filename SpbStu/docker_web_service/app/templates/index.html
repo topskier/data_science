@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Предсказание вероятности убытка</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Предсказание вероятности наступления убытка</h1>
+        <p class="subtitle">Введите данные для получения предсказания от нейронной сети</p>
+        
+        <form id="predictionForm">
+            <div class="form-group">
+                <label for="second_driver">Второй водитель:</label>
+                <select id="second_driver" name="second_driver" required>
+                    <option value="">-- Выберите --</option>
+                    <option value="0">Нет</option>
+                    <option value="1">Да</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="year_matriculation">Год регистрации транспортного средства:</label>
+                <input type="number" id="year_matriculation" name="year_matriculation" 
+                       min="1900" max="2025" required placeholder="Например: 2015">
+            </div>
+
+            <div class="form-group">
+                <label for="power">Мощность (л.с.):</label>
+                <input type="number" id="power" name="power" 
+                       min="0" step="0.1" required placeholder="Например: 150.5">
+            </div>
+
+            <div class="form-group">
+                <label for="age">Возраст водителя:</label>
+                <input type="number" id="age" name="age" 
+                       min="18" max="100" required placeholder="Например: 35">
+            </div>
+
+            <div class="form-group">
+                <label for="driving_experience">Водительский стаж (лет):</label>
+                <input type="number" id="driving_experience" name="driving_experience" 
+                       min="0" max="80" required placeholder="Например: 10">
+            </div>
+
+            <button type="submit" class="btn-predict">Предсказать</button>
+        </form>
+
+        <div id="result" class="result hidden">
+            <h2>Результат предсказания</h2>
+            <p id="resultText"></p>
+            <div class="probability-bar">
+                <div id="probabilityFill" class="probability-fill"></div>
+            </div>
+            <p class="probability-value" id="probabilityValue"></p>
+        </div>
+
+        <div id="error" class="error hidden">
+            <p id="errorText"></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Скрываем предыдущие результаты
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            
+            // Собираем данные формы
+            const formData = new FormData(this);
+            
+            try {
+                // Отправляем запрос
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Показываем результат
+                    document.getElementById('resultText').textContent = data.message;
+                    document.getElementById('probabilityValue').textContent = 
+                        `${(data.claim_prob * 100).toFixed(2)}%`;
+                    
+                    // Обновляем визуальную шкалу
+                    const fillElement = document.getElementById('probabilityFill');
+                    fillElement.style.width = `${data.claim_prob * 100}%`;
+                    
+                    // Цвет в зависимости от вероятности
+                    if (data.claim_prob < 0.3) {
+                        fillElement.style.backgroundColor = '#4caf50';
+                    } else if (data.claim_prob < 0.7) {
+                        fillElement.style.backgroundColor = '#ff9800';
+                    } else {
+                        fillElement.style.backgroundColor = '#f44336';
+                    }
+                    
+                    document.getElementById('result').classList.remove('hidden');
+                } else {
+                    // Показываем ошибку
+                    document.getElementById('errorText').textContent = data.message;
+                    document.getElementById('error').classList.remove('hidden');
+                }
+            } catch (error) {
+                document.getElementById('errorText').textContent = 
+                    'Ошибка соединения с сервером: ' + error.message;
+                document.getElementById('error').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

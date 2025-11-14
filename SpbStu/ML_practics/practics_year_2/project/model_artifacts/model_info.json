@@ -1,0 +1,10 @@
+{
+  "model_name": "GigaChat-2",
+  "temperature": 0.1,
+  "prompt_templates": {
+    "type2": "литературно-тематическое сочинение",
+    "type3": "морально-нравственное сочинение"
+  },
+  "output_parser": "PydanticOutputParser",
+  "timestamp": "2025-11-11T18:47:36.556467"
+}
